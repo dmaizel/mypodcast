@@ -5,19 +5,40 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "codegen": "apollo service:download --endpoint=https://frozen-river-77426.herokuapp.com/query && apollo client:codegen src/types/graphql.ts --includes='src/**/*.ts' --localSchemaFile=schema.json --outputFlat --target=typescript",
+    "postinstall": "npx typesync"
   },
   "dependencies": {
+    "@apollo/react-hooks": "^4.0.0",
+    "@react-native-community/masked-view": "0.1.10",
+    "@react-navigation/bottom-tabs": "^5.8.0",
+    "@react-navigation/native": "^5.7.3",
+    "@react-navigation/stack": "^5.9.0",
+    "@types/jest": "^26.0.9",
+    "@types/react-native-vector-icons": "^6.4.5",
+    "apollo-boost": "^0.4.9",
     "expo": "~38.0.8",
     "expo-status-bar": "^1.0.2",
+    "graphql": "^15.3.0",
+    "jest": "^26.2.2",
     "react": "~16.11.0",
     "react-dom": "~16.11.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-38.0.2.tar.gz",
-    "react-native-web": "~0.11.7"
+    "react-native-gesture-handler": "~1.6.0",
+    "react-native-reanimated": "~1.9.0",
+    "react-native-safe-area-context": "~3.0.7",
+    "react-native-screens": "~2.9.0",
+    "react-native-track-player": "^1.2.3",
+    "react-native-vector-icons": "^7.0.0",
+    "react-native-web": "~0.11.7",
+    "expo-av": "~8.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",
+    "@types/babel__core": "^7.1.9",
     "@types/react": "~16.9.41",
+    "@types/react-dom": "~16.9.8",
     "@types/react-native": "~0.62.13",
     "typescript": "~3.9.5"
   },
