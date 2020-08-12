@@ -1,43 +1,57 @@
 import 'react-native-gesture-handler';
-import React, {useEffect, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
 import MainStackNavigator from './src/navigators/MainStackNavigator';
 import TrackPlayer from 'react-native-track-player';
 
-import {ApolloProvider} from '@apollo/react-hooks';
-import {client} from './src/graphql/client';
-import {Audio} from 'expo-av';
-import {PlayerConextProvider} from './src/contexts/PlayerContext';
+import { ApolloProvider } from '@apollo/react-hooks';
+import { client } from './src/graphql/client';
+import { PlayerConextProvider } from './src/contexts/PlayerContext';
+
+const track = {
+  id: '1',
+  url:
+    'https://cdn.simplecast.com/audio/05bd32/05bd32de-6cd4-40f6-b3bd-0bdf6750dd58/9b70bc7c-6bcc-48e7-8265-90089d7a1ed3/141_tc.mp3?aid=rss_feed',
+  title: '141: Jason Fried - Running the Tailwind Business on Basecamp',
+  artist: 'Full Stack Radio',
+};
 
 export default function App() {
-  // useEffect(() => {
-  //   (async () => {
-  //     const {sound, status} = await Audio.Sound.createAsync(
-  //       {
-  //         uri: 'http://traffic.libsyn.com/joeroganexp/p1520.mp3?dest-id=19997',
-  //       },
-  //       {shouldPlay: true},
-  //     );
-  //     try {
-  //       await sound.playAsync();
-  //       setTimeout(() => {
-  //         sound.pauseAsync();
-  //       }, 2000);
-  //       // Your sound is playing!
-  //     } catch (error) {
-  //       // An error occurred!
-  //     }
-  //   })();
-  // }, []);
+  const [isReady, setIsReady] = useState<boolean>(false)
+
+  useEffect(() => {
+    (async () => {
+      await TrackPlayer.setupPlayer().then(() => {
+        console.log('Player is setup')
+        TrackPlayer.updateOptions({
+          capabilities: [
+            TrackPlayer.CAPABILITY_PLAY,
+            TrackPlayer.CAPABILITY_PAUSE,
+            TrackPlayer.CAPABILITY_STOP,
+            TrackPlayer.CAPABILITY_JUMP_FORWARD,
+            TrackPlayer.CAPABILITY_JUMP_BACKWARD,
+          ],
+          jumpInterval: 30
+        })
+        setIsReady(true)
+      }).catch(err => console.log('Error setting-up the Player: ', err))
+    })()
+  }, [])
 
   return (
     <ApolloProvider client={client}>
-      <PlayerConextProvider>
-        <NavigationContainer>
-          <MainStackNavigator />
-        </NavigationContainer>
-      </PlayerConextProvider>
+      {isReady ? (
+        <PlayerConextProvider>
+          <NavigationContainer>
+            <MainStackNavigator />
+          </NavigationContainer>
+        </PlayerConextProvider>
+      ) : (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size='large' />
+          </View>
+        )}
     </ApolloProvider>
   );
 }

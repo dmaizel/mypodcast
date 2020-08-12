@@ -1,17 +1,21 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {PlaylistItem} from '../components/music-player/PlayListItem';
-import {AVPlaybackStatus, Audio} from 'expo-av';
-import {Playback} from 'expo-av/build/AV';
+import RNTrackPlayer, {
+  State as TrackPlayerState,
+  STATE_PAUSED,
+  STATE_PLAYING,
+  STATE_STOPPED,
+  Track,
+} from 'react-native-track-player';
 
 interface PlayerContextType {
   isPlaying: boolean;
   isPaused: boolean;
   isStopped: boolean;
   isEmpty: boolean;
-  currentTrack: PlaylistItem | null;
-  play: (track?: PlaylistItem) => void;
+  currentTrack: Track | null;
+  play: (track?: Track) => void;
   pause: () => void;
+  seekTo: (amount?: number) => void;
 }
 
 export const PlayerConext = React.createContext<PlayerContextType>({
@@ -22,58 +26,63 @@ export const PlayerConext = React.createContext<PlayerContextType>({
   currentTrack: null,
   play: () => null,
   pause: () => null,
+  seekTo: (amount?: number) => null,
 });
 
 export const PlayerConextProvider: React.FC = (props) => {
-  const [playerState, setPlayerState] = React.useState<null | AVPlaybackStatus>(
+  const [playerState, setPlayerState] = React.useState<null | TrackPlayerState>(
     null,
   );
-  const [soundObject, setSoundObject] = React.useState<null | Audio.Sound>(
-    null,
-  );
-  const [currentTrack, setCurrentTrack] = React.useState<null | PlaylistItem>(
-    null,
-  );
+  const [currentTrack, setCurrentTrack] = React.useState<null | Track>(null);
 
   React.useEffect(() => {
-    (async () => {
-      const playbackObject = await new Audio.Sound();
-      setSoundObject(playbackObject);
-    })();
+    const listener = RNTrackPlayer.addEventListener(
+      'playback-state',
+      ({state}: {state: TrackPlayerState}) => {
+        setPlayerState(state);
+      },
+    );
 
     return () => {
-      setSoundObject(null);
+      listener.remove();
     };
   }, []);
 
-  const value: PlayerContextType = {
-    isPlaying: playerState?.isLoaded ? playerState.isPlaying : false,
-    isPaused: playerState?.isLoaded && !playerState.isPlaying ? true : false,
-    isStopped: false,
-    isEmpty: true,
-    currentTrack: currentTrack,
-    play: async (track?: PlaylistItem) => {
-      if (!track) {
-        if (currentTrack) {
-          await soundObject?.playAsync();
-        }
-        return;
+  const play = async (track?: Track) => {
+    if (!track) {
+      if (currentTrack) {
+        await RNTrackPlayer.play();
       }
+      return;
+    }
 
-      const {sound, status} = await Audio.Sound.createAsync(
-        {uri: track?.uri},
-        {shouldPlay: true},
-        (state: AVPlaybackStatus) => {
-          setPlayerState(state);
-        },
-      );
-      setCurrentTrack(track);
-      setSoundObject(sound);
-      soundObject?.playAsync();
-    },
-    pause: async () => {
-      soundObject?.pauseAsync();
-    },
+    if (currentTrack && track.id !== currentTrack.id) {
+      await RNTrackPlayer.reset();
+    }
+
+    await RNTrackPlayer.add([track]);
+    setCurrentTrack(track);
+    await RNTrackPlayer.play();
+  };
+
+  const pause = async () => {
+    RNTrackPlayer.pause();
+  };
+
+  const seekTo = async (amount = 30) => {
+    const position = await RNTrackPlayer.getPosition();
+    await RNTrackPlayer.seekTo(position + amount);
+  };
+
+  const value: PlayerContextType = {
+    isPlaying: playerState === STATE_PLAYING,
+    isPaused: playerState === STATE_PAUSED,
+    isStopped: playerState === STATE_STOPPED,
+    isEmpty: playerState === null,
+    currentTrack,
+    play,
+    pause,
+    seekTo,
   };
 
   return (
